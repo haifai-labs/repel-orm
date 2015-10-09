@@ -115,17 +115,24 @@ class RActiveQuery {
             $in_values = "";
 
             $parameters = array();
-            
+
             foreach ($value as $v) {
                 $in_values .= ":{$column}{$i}, ";
                 $parameters[":{$column}{$i}"] = $v;
                 $i++;
             }
 
-            $this->_where[] = array(
-                "condition"  => "{$this->_table}.{$column} IN ( " . substr($in_values, 0, strlen($in_values) - 2) . " )",
-                "parameters" => $parameters
-            );
+            if ($operator === ROperator::NOT) {
+                $this->_where[] = array(
+                    "condition"  => "{$this->_table}.{$column} NOT IN ( " . substr($in_values, 0, strlen($in_values) - 2) . " )",
+                    "parameters" => $parameters
+                );
+            } else {
+                $this->_where[] = array(
+                    "condition"  => "{$this->_table}.{$column} IN ( " . substr($in_values, 0, strlen($in_values) - 2) . " )",
+                    "parameters" => $parameters
+                );
+            }
         } else {
             $repel_operator = ROperator::$OPERATORS[$this->_record->ADAPTER][$operator];
             $this->_where[] = array(
