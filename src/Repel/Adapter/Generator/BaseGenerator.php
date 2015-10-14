@@ -2,8 +2,6 @@
 
 namespace Repel\Adapter\Generator;
 
-use Repel\Framework;
-
 class BaseGenerator {
 
     public static function singular($word, $delete_underscores = true) {
@@ -20,8 +18,14 @@ class BaseGenerator {
             $word = substr($word, 0, strlen($word) - 3);
             $word .= "x";
         }
+
+        // delete -es
+        if (substr($word, strlen($word) - 2) == "es" && in_array(substr($word, strlen($word) - 3, 1), array("s", "x", "z", "ch", "sh"))) {
+            $word = substr($word, 0, strlen($word) - 2);
+        }
+
         // delete -s
-        if ($word[strlen($word) - 1] == "s") {
+        if ($word[strlen($word) - 1] == "s" && substr($word, strlen($word) - 2) !== "ss") {
             $word = substr($word, 0, strlen($word) - 1);
         }
 
@@ -30,25 +34,28 @@ class BaseGenerator {
             if (!$delete_underscores) {
                 $word = self::str_replace_limit("ies", "y", $word);
             } else {
-                $word = self::str_replace_limit("ies_", "y", $word);
+                $word             = self::str_replace_limit("ies_", "y", $word);
                 $word[$index + 1] = strtoupper($word[$index + 1]);
             }
         }
 
-        while (substr_count($word, "s_")) {
+        $index = 0;
+        while (substr_count($word, "s_", $index + 1)) {
             $index = strpos($word, "s_");
-            if (!$delete_underscores) {
-                $word = self::str_replace_limit("s", "", $word);
-            } else {
-                $word = self::str_replace_limit("s_", "", $word);
-                $word[$index] = strtoupper($word[$index]);
+            if ($word[$index - 1] !== "s") {
+                if (!$delete_underscores) {
+                    $word = self::str_replace_limit("s", "", $word);
+                } else {
+                    $word         = self::str_replace_limit("s_", "", $word);
+                    $word[$index] = strtoupper($word[$index]);
+                }
             }
         }
 
         if ($delete_underscores) {
             while (substr_count($word, "_")) {
-                $index = strpos($word, "_");
-                $word = self::str_replace_limit("_", "", $word);
+                $index        = strpos($word, "_");
+                $word         = self::str_replace_limit("_", "", $word);
                 $word[$index] = strtoupper($word[$index]);
             }
         }
