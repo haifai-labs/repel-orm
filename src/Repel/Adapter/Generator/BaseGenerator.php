@@ -6,7 +6,7 @@ class BaseGenerator {
 
     public static function singular($word, $delete_underscores = true) {
         // first letter to upper
-        $word [0] = strtoupper($word [0]);
+        $word[0] = strtoupper($word[0]);
 
         // delete -ies
         if (substr($word, strlen($word) - 3) == "ies") {

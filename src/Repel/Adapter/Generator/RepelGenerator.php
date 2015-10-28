@@ -84,8 +84,6 @@ class RepelGenerator extends BaseGenerator {
             }
         }
 
-//        file_put_contents($this->base_path . $filename . '.php', $this->generateBaseActiveRecord($table));
-
         if ($warning) {
             echo CLI::warning("Warning! Irrelevant files found in base_path!");
         }
@@ -118,13 +116,6 @@ class RepelGenerator extends BaseGenerator {
         $this->table_name = "";
         $this->cross_reference = false;
     }
-
-//    public function generateBaseActiveRecord() {
-//        $result = '';
-//        $result .= "<?php\n";
-//        $result .= "class _BaseActiveRecord {};\n\n";
-//        return $result;
-//    }
 
     public function generateTable($table) {
         $namespace_prefix = $this->namespace_prefix;

@@ -10,22 +10,22 @@ use Repel\Adapter\Classes\Relationship;
 use Repel\Adapter\Classes\ForeignKey;
 use Repel\Adapter\Classes\Column;
 
-const DOT_FILL = 36;
+const DOT_FILL    = 36;
 const HEADER_FILL = 38;
 
 class Adapter {
 
     protected $db;
     public $config;
-    public $adapter = null;
-    protected $schema = 'public';
-    protected $tables = array();
-    protected $fetchers = array();
+    public $adapter       = null;
+    protected $schema     = 'public';
+    protected $tables     = array();
+    protected $fetchers   = array();
     protected $generators = array();
 
     public function __construct($config, $adapter) {
         echo CLI::h1('Repel adapter', HEADER_FILL);
-        $this->config = $config;
+        $this->config  = $config;
         $this->adapter = $adapter;
     }
 
@@ -87,9 +87,9 @@ class Adapter {
             }
             foreach ($table->columns as $column) {
                 if ($column->foreign_key) {
-                    $referenced_table = $this->getTable($column->foreign_key->referenced_table);
+                    $referenced_table     = $this->getTable($column->foreign_key->referenced_table);
                     $referenced_table->removeRelationship($table_name);
-                    $relationship = new Relationship();
+                    $relationship         = new Relationship();
                     $relationship->source = $table_name;
 
                     $many_refered_table = '';
@@ -101,9 +101,13 @@ class Adapter {
                         }
                     }
 
-                    $relationship->table = $many_refered_table;
-                    $relationship->type = 'many-to-many';
-                    $referenced_table->addRelationship($relationship);
+                    if (strlen($many_refered_table)) {
+                        $relationship->table = $many_refered_table;
+                        $relationship->type  = 'many-to-many';
+                        $referenced_table->addRelationship($relationship);
+                    } else {
+                        throw new \Exception('(ManyToMany) Foreign key in source table does not exist - ' . $table_name . " (" . $column->name . ")");
+                    }
                 }
             }
         }
@@ -115,11 +119,11 @@ class Adapter {
                 if ($table->name !== $relationship_table->name) {
                     $reference = $relationship_table->getReferenceTo($table->name);
                     if ($reference) {
-                        $relationship = new Relationship();
-                        $relationship->table = $relationship_table->name;
-                        $relationship->type = 'one-to-many';
+                        $relationship              = new Relationship();
+                        $relationship->table       = $relationship_table->name;
+                        $relationship->type        = 'one-to-many';
                         $relationship->foreign_key = $reference['foreign_key'];
-                        $table->relationships[] = $relationship;
+                        $table->relationships[]    = $relationship;
                     }
                 }
             }
@@ -131,7 +135,7 @@ class Adapter {
     }
 
     public function addTable($table_name, $table_type) {
-        $new_table = new Table();
+        $new_table       = new Table();
         $new_table->name = $table_name;
         if ($table_type === 'BASE TABLE') {
             $new_table->type = 'table';
