@@ -5,9 +5,9 @@ namespace Repel\Framework;
 class RFormatter {
 
     public $_record;
-    public $_formatters = array();
+    public $_formatters       = array();
     private $_base_formatters = array(
-        "date", "bool"
+        "date", "bool", "unserialize"
     );
 
     public function __construct($record = null) {
@@ -22,8 +22,8 @@ class RFormatter {
     public function format($attributte, array $formatter) {
         $attributte = str_replace("^", "", $attributte);
         $attributte = str_replace("*", "", $attributte);
-        $keys = array_keys($formatter);
-        $key = explode(":", $keys[0]);
+        $keys       = array_keys($formatter);
+        $key        = explode(":", $keys[0]);
 
         if (count($key) === 2) {
             $type = $key[1];
@@ -48,18 +48,20 @@ class RFormatter {
 
     private function formatBase($attributte, array $formatter) {
         $keys = array_keys($formatter);
-        $key = explode(":", $keys[0]);
+        $key  = explode(":", $keys[0]);
 
         if (count($key) === 2) {
             $new_attributte = $key[0];
-            $type = $key[1];
-            $parameters = $formatter[$keys[0]];
+            $type           = $key[1];
+            $parameters     = $formatter[$keys[0]];
 
             switch ($type) {
                 case "date":
                     return array($new_attributte, $this->formatDate($this->_record->$attributte, $parameters));
                 case "bool":
                     return array($new_attributte, $this->formatBool($this->_record->$attributte, $parameters));
+                case "unserialize":
+                    return array($new_attributte, $this->formatUnserialize($attributte));
                 default:
                     return $this->_record->$attributte;
             }
@@ -88,6 +90,10 @@ class RFormatter {
         } else {
             return filter_var($value, FILTER_VALIDATE_BOOLEAN);
         }
+    }
+
+    protected function formatUnserialize($attribute) {
+        return unserialize($this->_record->{$attribute});
     }
 
 }
