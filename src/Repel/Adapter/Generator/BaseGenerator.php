@@ -20,7 +20,7 @@ class BaseGenerator {
         }
 
         // delete -es
-        if (substr($word, strlen($word) - 2) == "es" && in_array(substr($word, strlen($word) - 3, 1), array("s", "x", "z", "ch", "sh"))) {
+        if (substr($word, strlen($word) - 2) == "es" && (in_array(substr($word, strlen($word) - 3, 1), array("o", "x", "z")) || in_array(substr($word, strlen($word) - 4, 2), array("ss", "sh", "ch")))) {
             $word = substr($word, 0, strlen($word) - 2);
         }
 
