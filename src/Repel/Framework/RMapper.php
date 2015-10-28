@@ -12,7 +12,7 @@ class RMapper {
     public function __construct($record) {
         $this->_exclude = array();
         $this->_include = array();
-        $this->_record = $record;
+        $this->_record  = $record;
     }
 
     public static function create($record) {
@@ -72,7 +72,7 @@ class RMapper {
     }
 
     protected function mapObject($o) {
-        $map = $o::$MAP;
+        $map         = $o::$MAP;
         $attributtes = $o->TYPES;
 
         $json = new \stdClass();
@@ -105,7 +105,7 @@ class RMapper {
         $formatter = new RFormatter($o);
         foreach ($this->_fixed_map as $php_key => $json_key) {
             if (is_array($json_key)) {
-                $result = $formatter->format($php_key, $json_key);
+                $result           = $formatter->format($php_key, $json_key);
                 $json->$result[0] = $result[1];
             } else {
                 if (!in_array($php_key, $map)) {
@@ -133,11 +133,13 @@ class RMapper {
         if (is_array($this->_record)) {
             if (count($this->_record) > 0) {
                 $attributtes = $this->_record[0]->TYPES;
-                $obj = $this->_record[0];
+                $obj         = $this->_record[0];
+            } else {
+                return $this;
             }
         } else {
             $attributtes = $this->_record->TYPES;
-            $obj = $this->_record;
+            $obj         = $this->_record;
         }
 
         if ($attributtes !== null) {
