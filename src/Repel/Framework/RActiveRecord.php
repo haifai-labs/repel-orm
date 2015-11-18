@@ -4,17 +4,18 @@ namespace Repel\Framework;
 
 class RActiveRecord {
 
-    public $_record = false;
-    public $_repel_custom = null;
-    public $_repel_custom_1 = null;
-    public static $MAP = array();
+    public $_record             = false;
+    public $_repel_custom       = null;
+    public $_repel_custom_1     = null;
+    public $_repel_custom_array = null;
+    public static $MAP          = array();
 
     public function __construct() {
         $this->_repel_custom = null;
     }
 
     static public function finder() {
-        $className = get_called_class();
+        $className  = get_called_class();
         $queryClass = "{$className}Query";
         return new $queryClass($className);
     }
@@ -28,7 +29,7 @@ class RActiveRecord {
     }
 
     public function copy() {
-        $class = get_called_class();
+        $class      = get_called_class();
         $new_object = new $class();
 
         foreach ($new_object->TYPES as $name => $type) {

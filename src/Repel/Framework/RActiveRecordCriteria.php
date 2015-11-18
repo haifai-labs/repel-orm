@@ -10,7 +10,7 @@ class RActiveRecordCriteria {
     public $Limit;
     public $Offset;
 
-    public function __construct($condition = null, $parameters = null) {
+    public function __construct($condition = null, $parameters = null, $limit = null) {
         if (is_array($condition)) {
             $temp_condition  = array();
             $temp_parameters = array();
@@ -32,6 +32,10 @@ class RActiveRecordCriteria {
             $this->Condition  = implode(" AND ", $temp_condition);
             $this->Parameters = $temp_parameters;
             $this->OrdersBy   = $temp_order_by;
+
+            if ($limit !== null) {
+                $this->Limit = (int) $limit;
+            }
         } else {
             $this->Condition = $condition;
             if ($parameters === null) {

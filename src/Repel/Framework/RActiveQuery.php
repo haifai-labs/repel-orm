@@ -9,6 +9,7 @@ class RActiveQuery {
     protected $_table;
     private $_where;
     private $_order_by;
+    private $_limit;
 
     public function __construct($record) {
         if (!isset($record)) {
@@ -19,6 +20,7 @@ class RActiveQuery {
         $this->_table       = $this->_record->TABLE;
         $this->_where       = array();
         $this->_order_by    = array();
+        $this->_limit       = null;
     }
 
     static public function create() {
@@ -56,11 +58,17 @@ class RActiveQuery {
                 $criteria = new RActiveRecordCriteria($criteria, $parameters);
             }
         } else {
-            $criteria     = new RActiveRecordCriteria($this->_where, $this->_order_by);
+            $criteria     = new RActiveRecordCriteria($this->_where, $this->_order_by, $this->_limit);
             $this->_where = array();
         }
 
         return RExecutor::instance($this->_record)->find($criteria, true);
+    }
+
+    public function limit($limit) {
+        $this->_limit = (int) $limit;
+
+        return $this;
     }
 
     public function findByColumn($column, $value) {
