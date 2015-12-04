@@ -109,7 +109,7 @@ LEFT JOIN information_schema.constraint_column_usage ccu
 
 
    WHERE tc.constraint_schema = '{$this->schema}') constraints ON constraints.constraint_column_name = columns.column_name AND constraints.constraint_table_name = columns.table_name
-   WHERE columns.table_schema = '{$this->schema}' AND (constraints.constraint_type = 'PRIMARY KEY' OR constraints.constraint_type = 'FOREIGN KEY' OR constraints.constraint_type is null)
+   WHERE columns.table_schema = '{$this->schema}'
    
    ORDER BY columns.table_name,columns.column_name";
 
