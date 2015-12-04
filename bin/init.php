@@ -28,15 +28,15 @@ try {
         die;
     }
 
-    foreach ($config['databases'] as $key => $c) {
-        $initiator = new Initiator\Initiator($c);
+    foreach ($config['databases'] as $key => $config) {
+        $initiator = new Initiator\Initiator($config);
 
         echo CLI::h1('initialize database', HEADER_FILL);
         echo CLI::h2('add sources', HEADER_FILL);
 
-        if (key_exists("views_dir", $c)) {
+        if (key_exists("views_dir", $config)) {
             echo CLI::dotFill('loading views', DOT_FILL);
-            $views = array_merge(glob($c['views_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($c['views_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+            $views = array_merge(glob($config['views_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($config['views_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
 
             foreach ($views as $view) {
                 $initiator->addSource($view);
@@ -46,9 +46,9 @@ try {
             echo "\n";
         }
 
-        if (key_exists("functions_dir", $c)) {
+        if (key_exists("functions_dir", $config)) {
             echo CLI::dotFill('loading functions', DOT_FILL);
-            $functions = array_merge(glob($c['functions_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($c['functions_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+            $functions = array_merge(glob($config['functions_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($config['functions_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
 
             foreach ($functions as $function) {
                 $initiator->addSource($function);
@@ -58,9 +58,9 @@ try {
             echo "\n";
         }
 
-        if (key_exists("indexes_dir", $c)) {
+        if (key_exists("indexes_dir", $config)) {
             echo CLI::dotFill('loading indexes', DOT_FILL);
-            $indexes = array_merge(glob($c['indexes_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($c['indexes_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+            $indexes = array_merge(glob($config['indexes_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($config['indexes_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
 
             foreach ($indexes as $index) {
                 $initiator->addSource($index);
@@ -70,9 +70,9 @@ try {
             echo "\n";
         }
 
-        if (key_exists("triggers_dir", $c)) {
+        if (key_exists("triggers_dir", $config)) {
             echo CLI::dotFill('loading triggers', DOT_FILL);
-            $triggers = array_merge(glob($c['triggers_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($c['triggers_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+            $triggers = array_merge(glob($config['triggers_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($config['triggers_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
 
             foreach ($triggers as $trigger) {
                 $initiator->addSource($trigger);
@@ -82,16 +82,16 @@ try {
             echo "\n";
         }
 
-        if (key_exists("inserts_dir", $c)) {
+        if (key_exists("inserts_dir", $config)) {
             echo CLI::dotFill('loading inserts', DOT_FILL);
-            if (is_array($c['inserts_dir'])) {
+            if (is_array($config['inserts_dir'])) {
                 $inserts = array();
 
-                foreach ($c['inserts_dir'] as $insert) {
+                foreach ($config['inserts_dir'] as $insert) {
                     $inserts = array_merge($inserts, glob($insert . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($insert . DIRECTORY_SEPARATOR . "*.sql"));
                 }
             } else {
-                $inserts = array_merge(glob($c['inserts_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($c['inserts_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+                $inserts = array_merge(glob($config['inserts_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($config['inserts_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
             }
 
             foreach ($inserts as $insert) {
@@ -102,9 +102,9 @@ try {
             echo "\n";
         }
 
-        if (key_exists("sequences_dir", $c)) {
+        if (key_exists("sequences_dir", $config)) {
             echo CLI::dotFill('loading sequences', DOT_FILL);
-            $sequences = array_merge(glob($c['sequences_dir'] . "/**/*.sql"), glob($c['sequences_dir'] . "/*.sql"));
+            $sequences = array_merge(glob($config['sequences_dir'] . "/**/*.sql"), glob($config['sequences_dir'] . "/*.sql"));
 
             foreach ($sequences as $sequence) {
                 $initiator->addSource($sequence);

@@ -43,11 +43,9 @@ class RActiveQuery {
                 $criteria = new RActiveRecordCriteria($criteria, $parameters);
             }
         } else {
-            $criteria     = new RActiveRecordCriteria($this->_where);
+            $criteria     = new RActiveRecordCriteria($this->_where, $this->_order_by, 1);
             $this->_where = array();
         }
-
-        $criteria->Limit = 1;
 
         return RExecutor::instance($this->_record)->find($criteria, false);
     }

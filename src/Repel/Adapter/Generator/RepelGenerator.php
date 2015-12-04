@@ -5,22 +5,22 @@ namespace Repel\Adapter\Generator;
 use Repel\Adapter\Generator\BaseGenerator;
 use Repel\Includes\CLI;
 
-const DOT_FILL = 36;
+const DOT_FILL    = 36;
 const HEADER_FILL = 38;
 
 class RepelGenerator extends BaseGenerator {
 
-    private $table_name = "";
-    private $primary_keys = array();
-    private $foreign_keys = array();
-    protected $adapter = null;
-    private $cross_reference = false;
-    private $key = null;
-    private $base_path = null;
+    private $table_name       = "";
+    private $primary_keys     = array();
+    private $foreign_keys     = array();
+    protected $adapter        = null;
+    private $cross_reference  = false;
+    private $key              = null;
+    private $base_path        = null;
     private $namespace_prefix = null;
 
     public function __construct($config, $key) {
-        $model_path = $config['model_directory_path'];
+        $model_path             = $config['model_directory_path'];
         $this->namespace_prefix = $config['model_namespace_prefix'];
 
         if ($model_path) {
@@ -32,7 +32,7 @@ class RepelGenerator extends BaseGenerator {
             $this->model_path = __DIR__ . '/data/';
         }
         $this->base_path = $this->model_path . 'Base/';
-        $this->key = $key;
+        $this->key       = $key;
     }
 
     public function setAdapter($adapter) {
@@ -69,9 +69,9 @@ class RepelGenerator extends BaseGenerator {
             mkdir($this->base_path);
         } else {
             // Check if proper directory 
-            $dh = opendir($this->base_path);
-            $ignore = array('.', '..');
-            $warning = false;
+            $dh       = opendir($this->base_path);
+            $ignore   = array('.', '..');
+            $warning  = false;
             while (false !== ($filename = readdir($dh))) {
                 if (in_array($filename, $ignore)) {
                     continue;
@@ -87,33 +87,38 @@ class RepelGenerator extends BaseGenerator {
         if ($warning) {
             echo CLI::warning("Warning! Irrelevant files found in base_path!");
         }
-        foreach ($this->adapter->getTables() as $table) {
-            echo CLI::dotFill($table->name . ' (' . CLI::color($table->type, dark_gray) . ')', DOT_FILL + 11);
 
-            $this->clear();
+        foreach ($this->adapter->getSchemaTables($this->key) as $t) {
+            foreach ($this->adapter->getTables() as $table) {
+                if ($table->name === $t) {
+                    echo CLI::dotFill($table->name . ' (' . CLI::color($table->type, dark_gray) . ')', DOT_FILL + 11);
 
-            $table_filename = self::getTableName($table->name);
-            $query_filename = self::getQueryName($table->name);
-            $table_base_filename = self::getTableBaseName($table->name);
-            $query_base_filename = self::getQueryBaseName($table->name);
+                    $this->clear();
 
-            if (!file_exists($this->model_path . $table_filename . '.php')) {
-                file_put_contents($this->model_path . $table_filename . '.php', $this->generateTable($table));
+                    $table_filename      = self::getTableName($table->name);
+                    $query_filename      = self::getQueryName($table->name);
+                    $table_base_filename = self::getTableBaseName($table->name);
+                    $query_base_filename = self::getQueryBaseName($table->name);
+
+                    if (!file_exists($this->model_path . $table_filename . '.php')) {
+                        file_put_contents($this->model_path . $table_filename . '.php', $this->generateTable($table));
+                    }
+                    if (!file_exists($this->model_path . $query_filename . '.php')) {
+                        file_put_contents($this->model_path . $query_filename . '.php', $this->generateTableQuery($table));
+                    }
+
+                    file_put_contents($this->base_path . $table_base_filename . '.php', $this->generateTableBase($table));
+                    file_put_contents($this->base_path . $query_base_filename . '.php', $this->generateTableQueryBase($table));
+
+                    echo CLI::color("done", green) . "\n";
+                }
             }
-            if (!file_exists($this->model_path . $query_filename . '.php')) {
-                file_put_contents($this->model_path . $query_filename . '.php', $this->generateTableQuery($table));
-            }
-
-            file_put_contents($this->base_path . $table_base_filename . '.php', $this->generateTableBase($table));
-            file_put_contents($this->base_path . $query_base_filename . '.php', $this->generateTableQueryBase($table));
-
-            echo CLI::color("done", green) . "\n";
         }
     }
 
     public function clear() {
-        $this->foreign_keys = array();
-        $this->table_name = "";
+        $this->foreign_keys    = array();
+        $this->table_name      = "";
         $this->cross_reference = false;
     }
 
@@ -146,7 +151,7 @@ class RepelGenerator extends BaseGenerator {
         $namespace_prefix = $this->namespace_prefix;
 
         $this->table_name = $table->name;
-        $result = "<?php" . "\n\n";
+        $result           = "<?php" . "\n\n";
         $result .= "namespace {$namespace_prefix}data\Base;\n";
         $result .= "\n";
         $result .= "use {$namespace_prefix}data;\n";
@@ -226,11 +231,11 @@ class RepelGenerator extends BaseGenerator {
     public function generateTableQueryBase($table) {
         $namespace_prefix = $this->namespace_prefix;
 
-        $query = "<?php" . "\n\n";
+        $query            = "<?php" . "\n\n";
         $query .= "namespace {$namespace_prefix}data\Base;\n";
         $query .= "\n";
         $query .= "use Repel\Framework;\n\n";
-        $table_name = BaseGenerator::singular($table->name);
+        $table_name       = BaseGenerator::singular($table->name);
         $this->table_name = $table_name;
 
         $query .= "class " . self::getQueryBaseName($table->name) . " extends Framework\RActiveQuery {\n\n";
@@ -272,6 +277,7 @@ class RepelGenerator extends BaseGenerator {
         }
         $result .= "\t\t\"_repel_custom\" => \"repel\",\n";
         $result .= "\t\t\"_repel_custom_1\" => \"repel\",\n";
+        $result .= "\t\t\"_repel_custom_array\" => \"repel\",\n";
         $result .= "\t);";
         return $result;
     }
@@ -289,7 +295,7 @@ class RepelGenerator extends BaseGenerator {
 
     public function generatePrimaryKeysArray($columns) {
         $this->primary_keys = array();
-        $result = "\tpublic \$PRIMARY_KEYS = array(\n";
+        $result             = "\tpublic \$PRIMARY_KEYS = array(\n";
         foreach ($columns as $column) {
             if ($column->is_primary_key) {
                 $result .= "\t\t\"{$column->name}\",\n";
@@ -368,7 +374,7 @@ class RepelGenerator extends BaseGenerator {
                 $key = $name;
             }
             $function_name = BaseGenerator::singular($key, true);
-            $object_name = mb_convert_case(BaseGenerator::singular($key, false), MB_CASE_LOWER, 'UTF-8');
+            $object_name   = mb_convert_case(BaseGenerator::singular($key, false), MB_CASE_LOWER, 'UTF-8');
 
             $result .= "\tpublic function get{$function_name}() {\n";
             $result .= "\tif(\$this->_{$object_name} === null) {\n";
@@ -383,9 +389,9 @@ class RepelGenerator extends BaseGenerator {
     public function generateRelationshipMethods($relationships) {
         $result = "\t// relationship methods\n";
         foreach ($relationships as $relationship) {
-            $function_name = BaseGenerator::firstLettersToUpper($relationship->table);
+            $function_name      = BaseGenerator::firstLettersToUpper($relationship->table);
             $active_record_name = BaseGenerator::singular($relationship->table);
-            $object_name = $relationship->table;
+            $object_name        = $relationship->table;
             if ($relationship->type === 'one-to-many') {
                 $foreign_key_name = $relationship->foreign_key->referenced_column;
 
@@ -408,7 +414,7 @@ class RepelGenerator extends BaseGenerator {
                 $result .= "\t\t}\n\n";
             } else if ($relationship->type === 'many-to-many') {
                 $foreign_key_name = mb_convert_case(BaseGenerator::singular($object_name), MB_CASE_LOWER, 'UTF-8') . "_id";
-                $m2m_table_name = BaseGenerator::singular($relationship->source);
+                $m2m_table_name   = BaseGenerator::singular($relationship->source);
                 $primary_key_name = mb_convert_case(BaseGenerator::singular($this->table_name, false), MB_CASE_LOWER, 'UTF-8') . "_id";
 
                 $result .= "\tpublic function get{$function_name}(\$condition = null, \$parameters = null) {\n";

@@ -58,8 +58,7 @@ class PostgreSQLFetcher implements FetcherInterface {
         return $this->adapter->tableExists($row['table_name']);
     }
 
-    public function fetch() {
-
+    public function fetch(\PDO $pdo = null) {
         if (!is_array($this->adapter->config)) {
             throw new \Exception('Fetcher PostgreSQLFetcher needs a config file.');
         }
@@ -68,12 +67,12 @@ class PostgreSQLFetcher implements FetcherInterface {
         }
 
         $this->config = $this->adapter->config[$this->connection_name];
-        if (isset($this->config['public_schema'])) {
-            $this->schema = $this->config['public_schema'];
+
+        if (key_exists('schema_name', $this->config)) {
+            $this->schema = $this->config['schema_name'];
         } else {
             $this->schema = 'public';
         }
-
 
         $sql = "select columns.table_name,tables.table_type,columns.column_name,columns.column_default,columns.is_nullable,columns.data_type,constraints.constraint_type,constraints.referenced_table,constraints.referenced_column
 FROM information_schema.tables tables JOIN information_schema.columns ON columns.table_name = tables.table_name 
@@ -109,12 +108,14 @@ LEFT JOIN information_schema.constraint_column_usage ccu
 
 
    WHERE tc.constraint_schema = '{$this->schema}') constraints ON constraints.constraint_column_name = columns.column_name AND constraints.constraint_table_name = columns.table_name
-   WHERE columns.table_schema = '{$this->schema}' AND (constraints.constraint_type = 'PRIMARY KEY' OR constraints.constraint_type = 'FOREIGN KEY' OR constraints.constraint_type is null)
+   WHERE columns.table_schema = '{$this->schema}' 
    
    ORDER BY columns.table_name,columns.column_name";
 
-        $this->db = new \PDO($this->config['driver'], $this->config['username'], $this->config['password']);
-        return $this->buildStructure($this->db->query($sql));
+        if ($pdo === null) { //dump
+            $pdo = new \PDO($this->config['driver'], $this->config['username'], $this->config['password']);
+        }
+        return $this->buildStructure($pdo->query($sql));
     }
 
     protected function buildStructure($results) {

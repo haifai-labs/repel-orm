@@ -6,7 +6,7 @@ class RConnectionManagerSingle {
 
     protected $name;
     protected $configuration = array();
-    protected $connection = null;
+    protected $connection    = null;
 
     public function setName($name) {
         $this->name = $name;
@@ -34,8 +34,12 @@ class RConnectionManagerSingle {
         if ($this->connection === null) {
             $this->connection = RDbConnection::instance($this->configuration['driver'], $this->configuration['username'], $this->configuration['password']);
         }
-        
+
         return $this->connection;
+    }
+
+    public function getDatabase() {
+        return $this->configuration["database"];
     }
 
     public function closeConnections() {
