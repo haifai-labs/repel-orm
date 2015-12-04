@@ -108,7 +108,11 @@ LEFT JOIN information_schema.constraint_column_usage ccu
 
 
    WHERE tc.constraint_schema = '{$this->schema}') constraints ON constraints.constraint_column_name = columns.column_name AND constraints.constraint_table_name = columns.table_name
+<<<<<<< HEAD
    WHERE columns.table_schema = '{$this->schema}' 
+=======
+   WHERE columns.table_schema = '{$this->schema}'
+>>>>>>> d017f940b7ed8e87f8d895316568a6a44a9b2fe7
    
    ORDER BY columns.table_name,columns.column_name";
 
