@@ -67,7 +67,6 @@ class PostgreSQLFetcher implements FetcherInterface {
         }
 
         $this->config = $this->adapter->config[$this->connection_name];
-
         if (key_exists('schema_name', $this->config)) {
             $this->schema = $this->config['schema_name'];
         } else {
@@ -75,9 +74,9 @@ class PostgreSQLFetcher implements FetcherInterface {
         }
 
         $sql = "select columns.table_name,tables.table_type,columns.column_name,columns.column_default,columns.is_nullable,columns.data_type,constraints.constraint_type,constraints.referenced_table,constraints.referenced_column
-FROM information_schema.tables tables JOIN information_schema.columns ON columns.table_name = tables.table_name 
+FROM information_schema.tables tables JOIN information_schema.columns ON columns.table_name = tables.table_name
 AND columns.table_schema = tables.table_schema
- 
+
 left join (
    SELECT tc.constraint_name,
           tc.constraint_type,
@@ -85,49 +84,47 @@ left join (
           kcu.column_name AS constraint_column_name,
           ccu.table_name AS referenced_table,
           ccu.column_name AS referenced_column
-          
- 
+
+
      FROM information_schema.table_constraints tc
 LEFT JOIN information_schema.key_column_usage kcu
 
        ON tc.constraint_catalog = kcu.constraint_catalog
       AND tc.constraint_schema = kcu.constraint_schema
       AND tc.constraint_name = kcu.constraint_name
-      
+
 LEFT JOIN information_schema.referential_constraints rc
 
        ON tc.constraint_catalog = rc.constraint_catalog
       AND tc.constraint_schema = rc.constraint_schema
       AND tc.constraint_name = rc.constraint_name
-      
+
 LEFT JOIN information_schema.constraint_column_usage ccu
 
        ON rc.unique_constraint_catalog = ccu.constraint_catalog
       AND rc.unique_constraint_schema = ccu.constraint_schema
       AND rc.unique_constraint_name = ccu.constraint_name
 
+         WHERE tc.constraint_schema = 'public') constraints ON constraints.constraint_column_name = columns.column_name AND constraints.constraint_table_name = columns.table_name
+         WHERE columns.table_schema = 'public'
 
-   WHERE tc.constraint_schema = '{$this->schema}') constraints ON constraints.constraint_column_name = columns.column_name AND constraints.constraint_table_name = columns.table_name
-<<<<<<< HEAD
-   WHERE columns.table_schema = '{$this->schema}' 
-=======
-   WHERE columns.table_schema = '{$this->schema}'
->>>>>>> d017f940b7ed8e87f8d895316568a6a44a9b2fe7
-   
    ORDER BY columns.table_name,columns.column_name";
 
         if ($pdo === null) { //dump
             $pdo = new \PDO($this->config['driver'], $this->config['username'], $this->config['password']);
         }
-        return $this->buildStructure($pdo->query($sql));
+          $query  = $pdo->query($sql);
+        return $this->buildStructure($query);
     }
 
     protected function buildStructure($results) {
-        foreach ($results as $row) {
-            if (!$this->tableExists($row)) {
-                $this->addTable($row);
+        if ($results instanceof \PDOStatement){
+            foreach ($results as $row) {
+                if (!$this->tableExists($row)) {
+                    $this->addTable($row);
+                }
+                $this->addColumn($row);
             }
-            $this->addColumn($row);
         }
     }
 

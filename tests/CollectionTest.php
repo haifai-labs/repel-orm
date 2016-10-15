@@ -42,9 +42,9 @@ foreach ($result as $res) {
 * @return PHPUnit_Extensions_Database_DB_IDatabaseConnection
 */
 public function getConnection() {
-  $config =  require('../src/Repel/Config/database.php');
+  $config =  require('../src/Repel/Config/db_config.php');
   if (!empty($config)){
-    $config = $config['primary'];
+    $config = $config['databases']['primary'];
     $this->pdo = new PDO($config['driver'],$config['username'],$config['password']);
     return $this->createDefaultDBConnection($this->pdo, $config['database']);
   }

@@ -55,8 +55,14 @@ class Adapter {
     public function getSchemaTables($key) {
         preg_match_all('/CREATE TABLE ([a-z_]+)/', file_get_contents($this->config[$key]['schema']), $matches);
 
-        $views     = array_merge(glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
-        $functions = array_merge(glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+        $views = array();
+        $functions = array();
+        if (isset($this->config[$key]) && isset($this->config[$key]['views_dir']) ){
+            $views     = array_merge(glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+        }
+        if (isset($this->config[$key]) && isset($this->config[$key]['functions_dir']) ){
+            $functions = array_merge(glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+        }
 
         $matches2 = array();
         $matches3 = array();
@@ -82,8 +88,14 @@ class Adapter {
     public function getSchemaTables2($key) {
         preg_match_all('/CREATE TABLE ([a-z_]+)/', file_get_contents($this->config[$key]['schema']), $matches);
 
-        $views     = array_merge(glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
-        $functions = array_merge(glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+        $views = array();
+        $functions = array();
+        if (isset($this->config[$key]) && isset($this->config[$key]['views_dir']) ){
+            $views     = array_merge(glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+        }
+        if (isset($this->config[$key]) && isset($this->config[$key]['functions_dir']) ){
+            $functions = array_merge(glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
+        }
 
         $matches2 = array();
         $matches3 = array();
@@ -119,7 +131,7 @@ class Adapter {
 
     /**
      * Fetch structure from database.
-     * 
+     *
      * Can add custom fetcher by passing a fetcher instance as an argument.
      * @param Fetcher $custom_fetcher
      */
@@ -144,38 +156,41 @@ class Adapter {
 
     protected function addManyToMany() {
         // @TODO to be a constructor class
-        $relationship_config = $this->many_to_many;
-        foreach ($relationship_config as $table_name) {
-            $table = $this->getTable($table_name);
-            if (!$table) {
-                throw new \Exception('(ManyToMany) Defined table does not exist: ' . $table_name);
-            }
-            foreach ($table->columns as $column) {
-                if ($column->foreign_key) {
-                    $referenced_table     = $this->getTable($column->foreign_key->referenced_table);
-                    $referenced_table->removeRelationship($table_name);
-                    $relationship         = new Relationship();
-                    $relationship->source = $table_name;
+        if ( isset ($this->many_to_many) && $this->many_to_many instanceof \Iterator){
+            $relationship_config = $this->many_to_many;
+            foreach ($relationship_config as $table_name) {
+                $table = $this->getTable($table_name);
+                if (!$table) {
+                    throw new \Exception('(ManyToMany) Defined table does not exist: ' . $table_name);
+                }
+                foreach ($table->columns as $column) {
+                    if ($column->foreign_key) {
+                        $referenced_table     = $this->getTable($column->foreign_key->referenced_table);
+                        $referenced_table->removeRelationship($table_name);
+                        $relationship         = new Relationship();
+                        $relationship->source = $table_name;
 
-                    $many_refered_table = '';
-                    foreach ($table->columns as $column) {
-                        if ($column->foreign_key) {
-                            if ($column->foreign_key->referenced_table !== $referenced_table->name) {
-                                $many_refered_table = $column->foreign_key->referenced_table;
+                        $many_refered_table = '';
+                        foreach ($table->columns as $column) {
+                            if ($column->foreign_key) {
+                                if ($column->foreign_key->referenced_table !== $referenced_table->name) {
+                                    $many_refered_table = $column->foreign_key->referenced_table;
+                                }
                             }
                         }
-                    }
 
-                    if (strlen($many_refered_table)) {
-                        $relationship->table = $many_refered_table;
-                        $relationship->type  = 'many-to-many';
-                        $referenced_table->addRelationship($relationship);
-                    } else {
-                        throw new \Exception('(ManyToMany) Foreign key in source table does not exist - ' . $table_name . " (" . $column->name . ")");
+                        if (strlen($many_refered_table)) {
+                            $relationship->table = $many_refered_table;
+                            $relationship->type  = 'many-to-many';
+                            $referenced_table->addRelationship($relationship);
+                        } else {
+                            throw new \Exception('(ManyToMany) Foreign key in source table does not exist - ' . $table_name . " (" . $column->name . ")");
+                        }
                     }
                 }
             }
         }
+
     }
 
     protected function setRelationships() {
