@@ -57,10 +57,14 @@ class CLI {
         return $return;
     }
 
-    public static function failure($ex) {
+    public static function failure($arg) {
         $return = CLI::color("failed", red) . "\n";
         $return.= "\n";
-        $return.= CLI::color($ex->getMessage(), 'white', 'red') . "\n";
+        if ($arg instanceof \Exception) {
+            $return.= CLI::color($arg->getMessage(), 'white', 'red') . "\n";
+        } else {
+            $return.= CLI::color((string)$arg, 'white', 'red') . "\n";
+        }
         $return.= "\n";
         return $return;
     }
