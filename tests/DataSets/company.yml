@@ -1,0 +1,11 @@
+companies:
+  -
+    company_id: 1
+    name: "Aplinet"
+    full_name: "Piotr Dziurla"
+    deleted: 0
+  -
+    company_id: 2
+    name: "Sanpo"
+    full_name: "Konrad Frysiak"
+    deleted: 0
