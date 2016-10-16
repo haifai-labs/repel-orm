@@ -9,28 +9,52 @@ class Collection_TestCase extends \PHPUnit_Extensions_Database_TestCase {
 
 
 protected function getSetUpOperation() {
+
+    $db_config =  require('../src/Repel/Config/db_config.php');
+    $connections = $db_config['runtime']['connections'];
+
+    foreach ($connections as $c) {
+        $db_conn_name = $c;
+
+        $db_conn_adapter = $db_config['databases'][$db_conn_name]['adapter'];
+        $db_conn_config = array(
+            'driver' => $db_config['databases'][$db_conn_name]['driver'],
+            'username' => $db_config['databases'][$db_conn_name]['username'],
+            'password' => $db_config['databases'][$db_conn_name]['password'],
+        );
+
+        $serviceContainer = \Repel\Repel::getServiceContainer();
+        $serviceContainer->setAdapterClass($db_conn_name, $db_conn_adapter);
+
+        $manager = new \Repel\Framework\RConnectionManagerSingle();
+        $manager->setConfiguration($db_conn_config);
+        $manager->setName($db_conn_name);
+        $serviceContainer->setConnectionManager($db_conn_name, $manager);
+        $serviceContainer->setDefaultDatasource($db_conn_name);
+    }
+
+
+//@TODO Resets every sequence 3 times (bad join)
   $sth = $this->pdo->query("
-  SELECT 'SELECT SETVAL(' ||
-  quote_literal(quote_ident(PGT.schemaname) || '.' || quote_ident(S.relname)) ||
-  ', COALESCE(MAX(' ||quote_ident(C.attname)|| '), 1) ) FROM ' ||
-  quote_ident(PGT.schemaname)|| '.'||quote_ident(T.relname)|| ';'
-  FROM pg_class AS S,
-  pg_depend AS D,
-  pg_class AS T,
-  pg_attribute AS C,
-  pg_tables AS PGT
-  WHERE S.relkind = 'S'
-  AND S.oid = D.objid
-  AND D.refobjid = T.oid
-  AND D.refobjid = C.attrelid
-  AND D.refobjsubid = C.attnum
-  AND T.relname = PGT.tablename
-  AND PGT.schemaname = 'public'
-  ORDER BY S.relname;"
+SELECT 'ALTER SEQUENCE ' ||
+ quote_ident(PGT.schemaname) || '.' || quote_ident(S.relname) ||
+ ' RESTART WITH 1;'
+ FROM pg_class AS S,
+ pg_depend AS D,
+ pg_class AS T,
+ pg_attribute AS C,
+ pg_tables AS PGT
+ WHERE S.relkind = 'S'
+ AND S.oid = D.objid
+ AND D.refobjid = T.oid
+ AND D.refobjid = C.attrelid
+ AND D.refobjsubid = C.attnum
+ AND T.relname = PGT.tablename
+ AND PGT.schemaname = 'public'
+ ORDER BY S.relname;"
 );
 $result = $sth->fetchAll();
 foreach ($result as $res) {
-  print_r($res[0]);
   $sth2 = $this->pdo->query($res[0]);
   $result = $sth->fetchAll();
 }
