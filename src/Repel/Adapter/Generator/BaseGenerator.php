@@ -62,6 +62,10 @@ class BaseGenerator {
         return $word;
     }
 
+    public function camelCase($string){
+        return lcfirst(self::firstLettersToUpper($string));
+    }
+
     public static function firstLettersToUpper($word) {
         return str_replace("_", "", mb_convert_case($word, MB_CASE_TITLE, 'UTF-8'));
     }

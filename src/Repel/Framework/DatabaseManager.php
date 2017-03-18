@@ -43,26 +43,14 @@ class DatabaseManager {
     }
 
     public function initialize() {
-
-        if (!isset($this->config ['schema'])) {
-            throw new \Exception("Schema file not defined.");
+        if (!file_exists($this->config ['schema'])) {
+            throw new \Exception("Schema file('" . $this->config ['schema'] . "') is missing.");
         }
-
-        if (!is_array($this->config ['schema'])) {
-            $schema_array = array($this->config ['schema']);
-        } else {
-            $schema_array = $this->config ['schema'];
-        }
-        foreach ($schema_array as $schema_file) {
-            if (!file_exists($schema_file)) {
-                throw new \Exception("Schema file('" . $schema_file . "') is missing.");
-            }
-            $schema = file_get_contents($schema_file);
-            $result = $this->db->exec($schema);
-            if ($result === false) {
-                $errorInfo = $this->db->errorInfo();
-                throw new \Exception('SQL ERROR: ' . "\n" . $errorInfo [2]);
-            }
+        $schema = file_get_contents($this->config ['schema']);
+        $result = $this->db->exec($schema);
+        if ($result === false) {
+            $errorInfo = $this->db->errorInfo();
+            throw new \Exception('SQL ERROR: ' . "\n" . $errorInfo [2]);
         }
     }
 

@@ -68,7 +68,7 @@ class RepelGenerator extends BaseGenerator {
         if (!is_dir($this->base_path)) {
             mkdir($this->base_path);
         } else {
-            // Check if proper directory 
+            // Check if proper directory
             $dh       = opendir($this->base_path);
             $ignore   = array('.', '..');
             $warning  = false;
@@ -87,32 +87,27 @@ class RepelGenerator extends BaseGenerator {
         if ($warning) {
             echo CLI::warning("Warning! Irrelevant files found in base_path!");
         }
+        foreach ($this->adapter->getTables() as $table) {
+            echo CLI::dotFill($table->name . ' (' . CLI::color($table->type, dark_gray) . ')', DOT_FILL + 11);
 
-        foreach ($this->adapter->getSchemaTables($this->key) as $t) {
-            foreach ($this->adapter->getTables() as $table) {
-                if ($table->name === $t) {
-                    echo CLI::dotFill($table->name . ' (' . CLI::color($table->type, dark_gray) . ')', DOT_FILL + 11);
+            $this->clear();
 
-                    $this->clear();
+            $table_filename      = self::getTableName($table->name);
+            $query_filename      = self::getQueryName($table->name);
+            $table_base_filename = self::getTableBaseName($table->name);
+            $query_base_filename = self::getQueryBaseName($table->name);
 
-                    $table_filename      = self::getTableName($table->name);
-                    $query_filename      = self::getQueryName($table->name);
-                    $table_base_filename = self::getTableBaseName($table->name);
-                    $query_base_filename = self::getQueryBaseName($table->name);
-
-                    if (!file_exists($this->model_path . $table_filename . '.php')) {
-                        file_put_contents($this->model_path . $table_filename . '.php', $this->generateTable($table));
-                    }
-                    if (!file_exists($this->model_path . $query_filename . '.php')) {
-                        file_put_contents($this->model_path . $query_filename . '.php', $this->generateTableQuery($table));
-                    }
-
-                    file_put_contents($this->base_path . $table_base_filename . '.php', $this->generateTableBase($table));
-                    file_put_contents($this->base_path . $query_base_filename . '.php', $this->generateTableQueryBase($table));
-
-                    echo CLI::color("done", green) . "\n";
-                }
+            if (!file_exists($this->model_path . $table_filename . '.php')) {
+                file_put_contents($this->model_path . $table_filename . '.php', $this->generateTable($table));
             }
+            if (!file_exists($this->model_path . $query_filename . '.php')) {
+                file_put_contents($this->model_path . $query_filename . '.php', $this->generateTableQuery($table));
+            }
+
+            file_put_contents($this->base_path . $table_base_filename . '.php', $this->generateTableBase($table));
+            file_put_contents($this->base_path . $query_base_filename . '.php', $this->generateTableQueryBase($table));
+
+            echo CLI::color("done", green) . "\n";
         }
     }
 
@@ -122,6 +117,31 @@ class RepelGenerator extends BaseGenerator {
         $this->cross_reference = false;
     }
 
+    public function generateMapField($column){
+        $result ='    ';
+        if ($column->name==="password" || ($column->name==="deleted" && ($column->type === 'int' || $column->type=== 'integer'))){
+            $result .= '"^'. $column->name .'" => "'. self::camelCase($column->name) .'",' . "\n";
+            return $result;
+        }
+        switch ($column->type) {
+            case 'time':
+            case 'time with time zone':
+            case 'time without time zone':
+                $result .= '"'. $column->name .'" => array("'. self::camelCase($column->name).':date" => "H:i"),' . "\n";
+                break;
+            case 'timestamp':
+            case 'timestamp with time zone':
+            case 'timestamp without time zone':
+            case 'date':
+                $result .= '"'. $column->name .'" => array("'. self::camelCase($column->name).':date" => "Y-m-d"),' . "\n";
+                break;
+            default:
+                $result .= '"'. $column->name .'" => "'. self::camelCase($column->name) .'",' . "\n";
+                break;
+        }
+        return $result;
+
+    }
     public function generateTable($table) {
         $namespace_prefix = $this->namespace_prefix;
 
@@ -130,7 +150,22 @@ class RepelGenerator extends BaseGenerator {
         $result .= "\n";
         $result .= "use {$namespace_prefix}data\Base;";
 
-        $result .= "\n\nclass " . self::getTableName($table->name) . " extends Base\\" . self::getTableBaseName($table->name) . " {";
+        $result .= "\n\nclass " . self::getTableName($table->name) . " extends Base\\" . self::getTableBaseName($table->name) . " {\n\n";
+        $result .= "public static \$MAP = array(\n";
+        foreach ($table->columns as $column) {
+            $result.= $this->generateMapField($column);
+        }
+        $result .= ");\n";
+            //
+            //     "birth_date" => array("birthDate:date" => "Y-m-d"),
+            //     "pay"        => array("pay:decimal"=>""),
+            //     "work_status*"        => array("workStatusDescription:dict"=>"WORK_STATUSES")
+            //
+            // "active" => array("active:bool" => false), // toString === false
+            // "^deleted" => "deleted",
+            // "^password" => "password"
+
+        $result .= "";
         $result .= "\n\n}\n\n";
         return $result;
     }
@@ -417,6 +452,9 @@ class RepelGenerator extends BaseGenerator {
                 $m2m_table_name   = BaseGenerator::singular($relationship->source);
                 $primary_key_name = mb_convert_case(BaseGenerator::singular($this->table_name, false), MB_CASE_LOWER, 'UTF-8') . "_id";
 
+                $relationship_table_singular  = mb_convert_case(BaseGenerator::singular($relationship->table, false), MB_CASE_LOWER, 'UTF-8');
+                $relationship_source_singular = mb_convert_case(BaseGenerator::singular($relationship->source, false), MB_CASE_LOWER, 'UTF-8');
+
                 $result .= "\tpublic function get{$function_name}(\$condition = null, \$parameters = null) {\n";
                 $result .= "\t\tif(\$this->_{$object_name} === null) {\n";
                 $result .= "\t\t\tif(!\$condition instanceof Framework\RActiveRecordCriteria) {\n";
@@ -432,16 +470,16 @@ class RepelGenerator extends BaseGenerator {
                 $result .= "\t\t\t\$criteria->Parameters[':{$primary_key_name}'] = \$this->{$primary_key_name};\n";
                 $result .= "\t\t\t\${$relationship->source} = data\D{$m2m_table_name}::finder()->find(\$criteria);\n";
                 $result .= "\t\t\t\${$relationship->table}_pks = array();\n";
-                $result .= "\t\t\tforeach(\${$relationship->source} as \${$relationship->source[0]}) {\n";
-                $result .= "\t\t\t\t\${$relationship->table}_pks[] = \${$relationship->source[0]}->{$foreign_key_name};\n";
+                $result .= "\t\t\tforeach(\${$relationship->source} as \${$relationship_source_singular}) {\n";
+                $result .= "\t\t\t\t\${$relationship->table}_pks[] = \${$relationship_source_singular}->{$foreign_key_name};\n";
                 $result .= "\t\t\t}\n";
                 $result .= "\t\t\tif(count(\${$relationship->table}_pks) > 0) {\n";
                 $result .= "\t\t\t\t\$this->_{$relationship->table} = data\D{$active_record_name}::finder()->findByPKs(\${$relationship->table}_pks);\n";
-                $result .= "\t\t\t\tforeach(\$this->_{$relationship->table} as \${$relationship->table[0]}) {\n";
-                $result .= "\t\t\t\t\tforeach(\${$relationship->source} as \${$relationship->source[0]}) {\n";
-                $result .= "\t\t\t\t\t\tif(\${$relationship->table[0]}->{$foreign_key_name} === \${$relationship->source[0]}->{$foreign_key_name}) {\n";
-                $result .= "\t\t\t\t\t\t\t\${$relationship->table[0]}->setRelationship(\${$relationship->source[0]});\n";
-                $result .= "\t\t\t\t\t\t\tunset(\${$relationship->source[0]});\n";
+                $result .= "\t\t\t\tforeach(\$this->_{$relationship->table} as \${$relationship_table_singular}) {\n";
+                $result .= "\t\t\t\t\tforeach(\${$relationship->source} as \${$relationship_source_singular}) {\n";
+                $result .= "\t\t\t\t\t\tif(\${$relationship_table_singular}->{$foreign_key_name} === \${$relationship_source_singular}->{$foreign_key_name}) {\n";
+                $result .= "\t\t\t\t\t\t\t\${$relationship_table_singular}->setRelationship(\${$relationship_source_singular});\n";
+                $result .= "\t\t\t\t\t\t\tunset(\${$relationship_source_singular});\n";
                 $result .= "\t\t\t\t\t\t\tbreak;\n";
                 $result .= "\t\t\t\t\t\t}\n";
                 $result .= "\t\t\t\t\t}\n";
@@ -497,7 +535,10 @@ class RepelGenerator extends BaseGenerator {
     }
 
     public function generateDeleteFunction($type) {
-        $result = "\tpublic function delete() {\n";
+        $result = "\tpublic function delete(\$physical=false) {\n";
+        $result .= "\t\tif(\$physical){\n";
+        $result .= "\t\treturn parent::delete();\n";
+        $result .= "\t\t}\n";
         $result .= "\t\t\$this->deleted = time();\n";
         $result .= "\t\treturn \$this->save();\n";
         $result .= "\t}\n";
@@ -509,11 +550,13 @@ class RepelGenerator extends BaseGenerator {
         if (count($this->primary_keys) > 0) {
             $primary_key = $this->primary_keys[0];
 
-            $result = "\tpublic function save() {\n";
-            $result .= "\t\t\$record = parent::save();\n";
+            $result = "\tpublic function save(\$criteria = null) {\n";
+            $result .= "\t\t\$record = parent::save(\$criteria);\n";
             $result .= "\t\tif(\$this->{$primary_key} === null) {\n";
             $result .= "\t\t\tforeach(\$this->TYPES as \$attr => \$type) {\n";
-            $result .= "\t\t\t\t\$this->\$attr = \$record->\$attr;\n";
+            $result .= "\t\t\t\tif (isset(\$record->\$attr)){\n";
+            $result .= "\t\t\t\t\t\$this->\$attr = \$record->\$attr;\n";
+            $result .= "\t\t\t\t}\n";
             $result .= "\t\t\t}\n";
             $result .= "\t\t\t\$this->_record = true;\n";
             $result .= "\t\t}\n";

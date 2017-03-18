@@ -52,83 +52,18 @@ class Adapter {
         return $this->tables;
     }
 
-    public function getSchemaTables($key) {
-        preg_match_all('/CREATE TABLE ([a-z_]+)/', file_get_contents($this->config[$key]['schema']), $matches);
-
-        $views     = array_merge(glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
-        $functions = array_merge(glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
-
-        $matches2 = array();
-        $matches3 = array();
-
-        $temp_matches = array();
-        foreach ($views as $view) {
-            preg_match_all('/CREATE OR REPLACE VIEW ([a-z_]+) AS/', file_get_contents($view), $temp_matches);
-
-            $matches2 = array_merge($matches2, $temp_matches[1]);
-        }
-
-        $temp_matches = array();
-        foreach ($functions as $function) {
-            preg_match_all('/CREATE OR REPLACE VIEW ([a-z_]+) AS/', file_get_contents($function), $temp_matches);
-
-            $matches3 = array_merge($matches3, $temp_matches[1]);
-        }
-
-        return array_merge($matches[1], $matches2, $matches3);
-    }
-
-    // zamiast nazw zwraca obiekty
-    public function getSchemaTables2($key) {
-        preg_match_all('/CREATE TABLE ([a-z_]+)/', file_get_contents($this->config[$key]['schema']), $matches);
-
-        $views     = array_merge(glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['views_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
-        $functions = array_merge(glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "**" . DIRECTORY_SEPARATOR . "*.sql"), glob($this->config[$key]['functions_dir'] . DIRECTORY_SEPARATOR . "*.sql"));
-
-        $matches2 = array();
-        $matches3 = array();
-
-        $temp_matches = array();
-        foreach ($views as $view) {
-            preg_match_all('/CREATE OR REPLACE VIEW ([a-z_]+) AS/', file_get_contents($view), $temp_matches);
-
-            $matches2 = array_merge($matches2, $temp_matches[1]);
-        }
-
-        $temp_matches = array();
-        foreach ($functions as $function) {
-            preg_match_all('/CREATE OR REPLACE VIEW ([a-z_]+) AS/', file_get_contents($function), $temp_matches);
-
-            $matches3 = array_merge($matches3, $temp_matches[1]);
-        }
-
-        $merge  = array_merge($matches[1], $matches2, $matches3);
-        $tables = array();
-
-        foreach ($merge as $t) {
-            foreach ($this->getTables() as $table) {
-                if ($table->name === $t) {
-                    $tables[] = $table;
-                    break;
-                }
-            }
-        }
-
-        return $tables;
-    }
-
     /**
      * Fetch structure from database.
      * 
      * Can add custom fetcher by passing a fetcher instance as an argument.
      * @param Fetcher $custom_fetcher
      */
-    public function fetch(\PDO $pdo = null) {
+    public function fetch() {
         echo CLI::h2('Fetch', HEADER_FILL);
 //        echo CLI::dotFill('fetching structure', DOT_FILL);
 
         foreach ($this->fetchers as $fetcher) {
-            $fetcher->fetch($pdo);
+            $fetcher->fetch();
         }
         $this->setRelationships();
         $this->addManyToMany();

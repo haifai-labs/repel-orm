@@ -92,12 +92,12 @@ class CLI {
     }
 
 // Returns all foreground color names
-    public function getForegroundColors() {
+    public static function getForegroundColors() {
         return array_keys(self::foreground_colors);
     }
 
 // Returns all background color names
-    public function getBackgroundColors() {
+    public static function getBackgroundColors() {
         return array_keys(self::background_colors);
     }
 

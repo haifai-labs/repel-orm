@@ -4,12 +4,11 @@ namespace Repel\Framework;
 
 class RServiceContainer {
 
-    protected $adapters           = array();
-    protected $adapterClasses     = array();
-    protected $transactions       = array();
+    protected $adapters = array();
+    protected $adapterClasses = array();
     protected $connectionManagers = array();
-    protected $defaultDatasource  = "";
-    protected $formatters         = array();
+    protected $defaultDatasource = "";
+    protected $formatters = array();
 
     public function setAdapterClass($name, $adapterClass) {
         $this->adapterClasses[$name] = $adapterClass;
@@ -18,7 +17,7 @@ class RServiceContainer {
 
     public function setAdapterClasses($adapterClasses) {
         $this->adapterClasses = $adapterClasses;
-        $this->adapters       = array();
+        $this->adapters = array();
     }
 
     public function setConnectionManager($name, $manager) {
@@ -37,18 +36,6 @@ class RServiceContainer {
         }
 
         return $this->connectionManagers[$name];
-    }
-
-    public function setTransaction($driver, RTransaction $transaction) {
-        if (key_exists($driver, $this->transactions)) {
-            $transaction->addTransactionLevel();
-        } else {
-            $this->transactions[$driver] = $transaction;
-        }
-    }
-
-    public function getTransactions() {
-        return $this->transactions;
     }
 
     public function hasConnectionManager($name) {

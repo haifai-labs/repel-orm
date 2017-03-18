@@ -8,6 +8,7 @@ class RMapper {
     protected $_include;
     protected $_record;
     protected $_fixed_map;
+    protected $_custom_map;
 
     public function __construct($record) {
         $this->_exclude = array();
@@ -47,7 +48,9 @@ class RMapper {
         return $this;
     }
 
-    public function map() {
+    public function map($custom_map = null) {
+        $this->_custom_map = $custom_map;
+
         if (is_array($this->_record)) {
             if (count($this->_record) > 0) {
                 $json_obj = array();
@@ -72,7 +75,11 @@ class RMapper {
     }
 
     protected function mapObject($o) {
-        $map         = $o::$MAP;
+        if ($this->_custom_map !== null) {
+            $map = $this->_custom_map;
+        } else {
+            $map = $o::$MAP;
+        }
         $attributtes = $o->TYPES;
 
         $json = new \stdClass();

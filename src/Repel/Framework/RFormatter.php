@@ -93,6 +93,9 @@ class RFormatter {
     }
 
     protected function formatUnserialize($attribute) {
+        if (empty($this->_record->{$attribute})) {
+            return null;
+        }
         return unserialize($this->_record->{$attribute});
     }
 

@@ -4,7 +4,6 @@ namespace Repel\Adapter\Fetcher;
 
 interface FetcherInterface {
 
-    public function fetch(\PDO $pdo = null);
-
+    public function fetch();
     public function setAdapter($adapter);
 }

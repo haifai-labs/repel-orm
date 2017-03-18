@@ -2,9 +2,12 @@
 
 namespace Repel\Framework;
 
-class RTransaction {
+class RTransaction extends \PDO {
 
-    protected $transaction_level = 0;
+    protected static $savepointTransactions = array("pgsql", "mysql");
+    // The current transaction level.
+    protected $transLevel = 0;
+    private static $singleton;
     protected $PDO;
 
     public function __construct($record = null) {
@@ -18,35 +21,46 @@ class RTransaction {
         $connection = $serviceContainer->getConnectionManager($key)->getConnection();
 
         $this->PDO = $connection->PDOInstance;
+    }
 
-        $serviceContainer->setTransaction($connection->getDriver(), $this);
+    public static function instance(RActiveRecord $record) {
+        if (!(self::$singleton instanceof self) || self::$singleton->_record !== $record) {
+            self::$singleton = new self($record);
+        }
+        return self::$singleton;
+    }
+
+    protected function nestable() {
+        return in_array($this->PDO->getAttribute(\PDO::ATTR_DRIVER_NAME), self::$savepointTransactions);
     }
 
     public function beginTransaction() {
-        if ($this->transaction_level === 0) {
+        if (!$this->nestable() || $this->transLevel == 0) {
             $this->PDO->beginTransaction();
+        } else {
+            $this->PDO->exec("SAVEPOINT LEVEL{$this->transLevel}");
         }
 
-        $this->transaction_level++;
-    }
-
-    public function addTransactionLevel() {
-        $this->transaction_level++;
+        $this->transLevel++;
     }
 
     public function commit() {
-        $this->transaction_level--;
+        $this->transLevel--;
 
-        if ($this->transaction_level === 0) {
+        if (!$this->nestable() || $this->transLevel == 0) {
             $this->PDO->commit();
+        } else {
+            $this->PDO->exec("RELEASE SAVEPOINT LEVEL{$this->transLevel}");
         }
     }
 
     public function rollBack() {
-        $this->transaction_level--;
+        $this->transLevel--;
 
-        if ($this->transaction_level === 0) {
+        if (!$this->nestable() || $this->transLevel == 0) {
             $this->PDO->rollBack();
+        } else {
+            $this->PDO->exec("ROLLBACK TO SAVEPOINT LEVEL{$this->transLevel}");
         }
     }
 

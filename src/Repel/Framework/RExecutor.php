@@ -69,7 +69,7 @@ class RExecutor {
         } else {
             $params = array();
         }
-        
+
         $result = $this->execute($statement, $params);
 
         if ($multiple) {
@@ -89,35 +89,50 @@ class RExecutor {
         }
     }
 
-    public function insert() {
+    public function insert(RActiveRecordCriteria $criteria = null) {
         $primary_key = $this->_record->PRIMARY_KEYS[0];
         $parameters = array();
-        $statement = "INSERT INTO " . $this->_record->TABLE . "( ";
+        $statement = "INSERT INTO " . $this->_record->TABLE;
+        $statement .= "( ";
 
-        $values = "( ";
-        foreach ($this->_record->TYPES as $property => $type) {
-            if ($type !== "repel" && !in_array($property, $this->_record->AUTO_INCREMENT) && (!in_array($property, $this->_record->DEFAULT) || (in_array($property, $this->_record->DEFAULT) && $this->_record->$property !== null))) {
-                if ($type === "bytea") {
-                    $values .= "decode(:" . $property . ", 'base64'), ";
-                } else {
-                    $values .= ":" . $property . ", ";
+
+        if ($criteria === null){
+            $values = "( ";
+            foreach ($this->_record->TYPES as $property => $type) {
+                if ($type !== "repel" && !in_array($property, $this->_record->AUTO_INCREMENT) && (!in_array($property, $this->_record->DEFAULT) || (in_array($property, $this->_record->DEFAULT) && $this->_record->$property !== null))) {
+                    if ($type === "bytea") {
+                        $values .= "decode(:" . $property . ", 'base64'), ";
+                    } else {
+                        $values .= ":" . $property . ", ";
+                    }
+                    $statement .= "\"{$property}\", ";
+                    $parameters[":{$property}"] = $this->parseSetProperty($type,$this->_record->$property);
                 }
-                $statement .= "\"{$property}\", ";
-                $parameters[":" . $property] = $this->_record->$property;
             }
+
+            $statement = substr($statement, 0, strlen($statement) - 2);
+            $values = substr($values, 0, strlen($values) - 2);
+
+            $statement .= " ) VALUES " . $values . " ) RETURNING {$primary_key} as id";
+        } else {
+            foreach ($this->_record->TYPES as $property => $type) {
+                if ($type !== "repel" && !in_array($property, $this->_record->AUTO_INCREMENT) ) {
+                    $statement .= "\"{$property}\", ";
+                }
+            }
+            $statement = substr($statement, 0, strlen($statement) - 2);
+
+            $statement .= " ) " . $criteria->Condition . " RETURNING {$primary_key} as id";
+            $parameters = $criteria->Parameters;
+
         }
-        $statement = substr($statement, 0, strlen($statement) - 2);
-        $values = substr($values, 0, strlen($values) - 2);
-
-        $statement .= " ) VALUES " . $values . " ) RETURNING {$primary_key} as id";
-
         $st = $this->execute($statement, $parameters);
 
-        $criteria = new RActiveRecordCriteria();
-        $criteria->Condition = "{$primary_key} = :{$primary_key}";
-        $criteria->Parameters[":{$primary_key}"] = $st->fetch()["id"];
+        $find_criteria = new RActiveRecordCriteria();
+        $find_criteria->Condition = "{$primary_key} = :{$primary_key}";
+        $find_criteria->Parameters[":{$primary_key}"] = $st->fetch()["id"];
 
-        return $this->find($criteria, false);
+        return $this->find($find_criteria, false);
     }
 
 //	public function delete() {
@@ -132,6 +147,18 @@ class RExecutor {
 //		$result = $this->execute( $statement, $parameters );
 //		return $result->rowCount();
 //	}
+protected function parseSetProperty($type,$value){
+    $type = strtolower($type);
+    switch ($type) {
+        case 'boolean':
+        if ($value){
+            return 'true';
+        }
+        return 'false';
+        break;
+    }
+    return $value;
+}
 
     public function update() {
         $primary_key = $this->_record->PRIMARY_KEYS[0];
@@ -142,14 +169,13 @@ class RExecutor {
         foreach ($this->_record->TYPES as $property => $type) {
             if ($type !== "repel") {
                 $statement .= "\"{$property}\" = :{$property}, ";
-                $parameters[":{$property}"] = $this->_record->$property;
+                $parameters[":{$property}"] = $this->parseSetProperty($type,$this->_record->$property);
             }
         }
 
         $statement = substr($statement, 0, strlen($statement) - 2);
         $statement .= " WHERE {$this->_record->TABLE}.{$primary_key} = :{$primary_key}";
         $parameters[":{$primary_key}"] = $this->_record->$primary_key;
-
         $result = $this->execute($statement, $parameters);
         return $result->rowCount();
     }
@@ -183,7 +209,7 @@ class RExecutor {
 
     private function execute($statement, $parameters) {
         $st = $this->PDO->prepare($statement);
-        
+
         foreach ($parameters as $key => &$value) {
             if ($key === ':data') {
                 $st->bindParam($key, $value, \PDO::PARAM_LOB);

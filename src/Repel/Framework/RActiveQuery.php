@@ -43,9 +43,11 @@ class RActiveQuery {
                 $criteria = new RActiveRecordCriteria($criteria, $parameters);
             }
         } else {
-            $criteria     = new RActiveRecordCriteria($this->_where, $this->_order_by, 1);
+            $criteria     = new RActiveRecordCriteria($this->_where);
             $this->_where = array();
         }
+
+        $criteria->Limit = 1;
 
         return RExecutor::instance($this->_record)->find($criteria, false);
     }
@@ -85,7 +87,15 @@ class RActiveQuery {
             $criteria->Condition = "{$this->_table}.{$column} IN ( " . substr($in_values, 0, strlen($in_values) - 2) . " )";
         } else {
             $criteria->Condition                = "{$this->_table}.{$column} = :{$column}";
-            $criteria->Parameters[":{$column}"] = $value;
+            if (is_bool($value)){
+                if ($value){
+                    $criteria->Parameters[":{$column}"] = 'true';
+                } else {
+                    $criteria->Parameters[":{$column}"] = 'false';
+                }
+            } else {
+                $criteria->Parameters[":{$column}"] = $value;
+            }
         }
 
         return RExecutor::instance($this->_record)->find($criteria, true);
@@ -107,7 +117,15 @@ class RActiveQuery {
             $criteria->Condition = "{$this->_table}.{$column} IN ( " . substr($in_values, 0, strlen($in_values) - 2) . " )";
         } else {
             $criteria->Condition                = "{$this->_table}.{$column} = :{$column}";
-            $criteria->Parameters[":{$column}"] = $value;
+            if (is_bool($value)){
+                if ($value){
+                    $criteria->Parameters[":{$column}"] = 'true';
+                } else {
+                    $criteria->Parameters[":{$column}"] = 'false';
+                }
+            } else {
+                $criteria->Parameters[":{$column}"] = $value;
+            }
         }
 
         return RExecutor::instance($this->_record)->find($criteria, false);
@@ -141,10 +159,25 @@ class RActiveQuery {
             }
         } else {
             $repel_operator = ROperator::$OPERATORS[$this->_record->ADAPTER][$operator];
-            $this->_where[] = array(
-                "condition"  => "{$this->_table}.{$column} {$repel_operator} :{$column}{$count}",
-                "parameters" => array(":{$column}{$count}" => $value)
-            );
+            if (is_bool($value)){
+                if ($value){
+                    $this->_where[] = array(
+                        "condition"  => "{$this->_table}.{$column} {$repel_operator} :{$column}{$count}",
+                        "parameters" => array(":{$column}{$count}" => 'true')
+                    );
+                } else {
+                    $this->_where[] = array(
+                        "condition"  => "{$this->_table}.{$column} {$repel_operator} :{$column}{$count}",
+                        "parameters" => array(":{$column}{$count}" => 'false')
+                    );
+                }
+            } else {
+                $this->_where[] = array(
+                    "condition"  => "{$this->_table}.{$column} {$repel_operator} :{$column}{$count}",
+                    "parameters" => array(":{$column}{$count}" => $value)
+                );
+            }
+
         }
         return $this;
     }

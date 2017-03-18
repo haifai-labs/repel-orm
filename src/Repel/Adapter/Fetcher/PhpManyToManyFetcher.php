@@ -7,11 +7,11 @@ use Repel\Adapter\Classes;
 
 class phpManyToManyFetcher implements FetcherInterface {
 
-    protected $config    = null;
-    protected $adapter   = null;
+    protected $config = null;
+    protected $adapter = null;
     protected $connection_name;
     protected $file_path = null;
-    protected $key       = null;
+    protected $key = null;
 
     /**
      * 
@@ -21,7 +21,7 @@ class phpManyToManyFetcher implements FetcherInterface {
     public function __construct($file_path = null, $key = null) {
         if ($file_path) {
             $this->file_path = $file_path;
-            $this->key       = $key;
+            $this->key = $key;
         } else {
             throw new \Exception('Fetcher phpManyToManyFetcher filepath not given.');
         }
@@ -35,7 +35,7 @@ class phpManyToManyFetcher implements FetcherInterface {
         }
     }
 
-    public function fetch(\PDO $pdo = null) {
+    public function fetch() {
         $tables = include($this->file_path);
         $this->adapter->setManyToMany($tables);
     }
