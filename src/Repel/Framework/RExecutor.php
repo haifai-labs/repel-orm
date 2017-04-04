@@ -38,8 +38,11 @@ class RExecutor {
             }
         }
         $columns = substr($columns, 0, strlen($columns) - 2);
-
-        $statement = "SELECT {$columns} FROM {$table_name}";
+		if (strlen($criteria->Select)){
+			$statement = $criteria->Select;
+		} else {
+			$statement = "SELECT {$columns} FROM {$table_name}";
+		}
 
         if (strlen($criteria->Condition) > 0) {
             $statement .= " WHERE " . $criteria->Condition;
@@ -50,7 +53,11 @@ class RExecutor {
 
             foreach ($criteria->OrdersBy as $key => $value) {
                 if (in_array(strtoupper($value), array("ASC", "DESC"))) {
-                    $statement .= " {$table_name}." . $key . " " . strtoupper($value) . ",";
+					if (strpos($key,'.')>=0){
+						$statement .= " ".$key . " " . strtoupper($value) . ",";
+					}else{
+						$statement .= " {$table_name}." . $key . " " . strtoupper($value) . ",";
+					}
                 } else {
                     throw new Exception("Wrong statement in ORDER BY clause: " . $value);
                 }
@@ -211,7 +218,6 @@ protected function parseSetProperty($type,$value){
 
     private function execute($statement, $parameters) {
         $st = $this->PDO->prepare($statement);
-
         foreach ($parameters as $key => &$value) {
             if ($key === ':data') {
                 $st->bindParam($key, $value, \PDO::PARAM_LOB);
