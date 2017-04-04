@@ -5,6 +5,7 @@ namespace Repel\Framework;
 class RActiveRecordCriteria {
 
     public $Condition;
+    public $Select;
     public $Parameters;
     public $OrdersBy;
     public $Limit;
@@ -16,9 +17,11 @@ class RActiveRecordCriteria {
             $temp_parameters = array();
             foreach ($condition as $c) {
                 $temp_condition[] = $c["condition"];
-                foreach ($c["parameters"] as $key => $value) {
-                    $temp_parameters[$key] = $value;
-                }
+				if (isset($c["parameters"]) ){
+					foreach ($c["parameters"] as $key => $value) {
+	                    $temp_parameters[$key] = $value;
+	                }
+				}
             }
 
             $temp_order_by = array();
@@ -31,6 +34,7 @@ class RActiveRecordCriteria {
 
             $this->Condition  = implode(" AND ", $temp_condition);
             $this->Parameters = $temp_parameters;
+            $this->Select = '';
             $this->OrdersBy   = $temp_order_by;
 
             if ($limit !== null) {

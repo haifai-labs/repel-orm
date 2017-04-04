@@ -1,0 +1,65 @@
+<div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="cancel()"><i class="fa fa-close fa-fw" aria-hidden="true"></i></button>
+    <button ng-if="!fullScreen" type="button" class="resize" aria-label="Resize" ng-click="$resize()"><i class="fa fa-expand fa-fw"></i></button>
+    <button ng-if="fullScreen" type="button" class="resize" aria-label="Resize" ng-click="$resize()"><i class="fa fa-compress fa-fw"></i></button>
+    {{::_('Edit workday')}}
+</div>
+
+<div class="modal-body edit-workday" hf-preload="workdayGroup" hf-preload-init >
+    <div class="container-fluid">
+		<div class="row">
+			<div class="col-md-4 col-sm-4">
+				<div class="form-group" >
+					<label class="control-label">{{::_('Week')}} </label>
+				 	<div class="week"><b>{{modal.getWeekTitle()}}</b> <small>{{modal.getWeekDate()}}</small></div>
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-4">
+				<div class="form-group" >
+					<label class="control-label">{{::_('Customer')}} </label>
+				 	<div class="customer">{{::modal.customer.name}}</div>
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-4">
+				<div class="form-group" >
+					<label class="control-label">{{::_('Employee')}} </label>
+				 	<div class="administrator">{{::modal.administrator.fullName}}</div>
+				</div>
+			</div>
+		</div>
+        <form name="form.workday" hf-submit="submitForm()">
+			<div class="workdays-table">
+				<div ng-repeat="day in modal.workdays">
+					<h4>{{day.label}}</h4>
+					<div class="flex-table">
+						<div class="flex-item">
+							<div class="start-time-label">
+								{{::_('from')}}
+							</div>
+							<div class="start-time">
+								<input class="form-control" ng-model="day.startTime" name="day.startTime" size="8" bs-timepicker data-time-format="HH:mm" data-length="1" data-minute-step="1" data-time-type="string" data-arrow-behavior="picker" type="text">
+							</div>
+						</div>
+						<div class="flex-item">
+							<div class="end-time-label">
+								{{::_('to')}}
+							</div>
+							<div class="end-time">
+								<input class="form-control" ng-model="day.endTime" name="day.endTime" size="8" bs-timepicker data-time-format="HH:mm" data-length="1" data-minute-step="1" data-time-type="string" data-arrow-behavior="picker" type="text">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button"  class="btn btn-primary" ng-click="form.workday.$submit()">
+        {{::_('Save')}}
+    </button>
+    <button type="button"  class="btn btn-default" ng-click="cancel();">
+        {{::_('Cancel')}}
+    </button>
+</div>

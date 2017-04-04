@@ -167,4 +167,3 @@ try {
     echo CLI::failure($ex);
     die();
 }
-

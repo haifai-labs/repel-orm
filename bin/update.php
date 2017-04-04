@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 require dirname(__DIR__) . '/autoloader.php';
 
@@ -80,12 +79,22 @@ try {
             $copier  = new Repel\Adapter\Copier\Copier($old_schema_adapter, $public_schema_adapter, $key, $key);
             $queries = $copier->copy($manager->db);
 
-            file_put_contents(__DIR__ . '/update.sql', $queries);
-
             echo CLI::h1('initializing', HEADER_FILL);
             $initiator = new Initiator\Initiator($manager->db);
 
-            $initiator->addSource(__DIR__ . '/update.sql');
+            $initiator->addQuery($queries);
+
+            if (key_exists("update_dir", $c)) {
+                echo CLI::dotFill('loading update', DOT_FILL);
+                $views = array_merge(glob($c['update_dir'] . "/**/*.sql"), glob($c['update_dir'] . "/*.sql"));
+
+                foreach ($views as $view) {
+                    $initiator->addSource($view);
+                }
+
+                echo CLI::color("done", green);
+                echo "\n";
+            }
 
             if (key_exists("views_dir", $c)) {
                 echo CLI::dotFill('loading views', DOT_FILL);
@@ -156,7 +165,6 @@ try {
 
             $drivers[] = $c["driver"];
 
-            unlink(__DIR__ . '/update.sql');
             if ($result === false) {
                 $errorInfo = $this->db->errorInfo();
                 throw new Exception('SQL ERROR: ' . "\n" . $errorInfo [2]);

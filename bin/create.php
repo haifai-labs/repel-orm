@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 require dirname(__DIR__) . '/autoloader.php';
 
@@ -7,7 +6,7 @@ use Repel\Framework\DatabaseManager;
 use Repel\Framework;
 
 const DOT_FILL = 30;
-        const HEADER_FILL = 32;
+    const HEADER_FILL = 32;
 
 try {
     if ($argv[1] !== null) {

@@ -172,10 +172,21 @@ class RActiveQuery {
                     );
                 }
             } else {
-                $this->_where[] = array(
-                    "condition"  => "{$this->_table}.{$column} {$repel_operator} :{$column}{$count}",
-                    "parameters" => array(":{$column}{$count}" => $value)
-                );
+				if ($value === null ) {
+					$repel_operator = ROperator::$OPERATORS[$this->_record->ADAPTER][ROperator::IS_NULL];
+					if ($operator === ROperator::NOT_EQUAL){
+						$repel_operator = ROperator::$OPERATORS[$this->_record->ADAPTER][ROperator::IS_NOT_NULL];
+					}
+					$this->_where[] = array(
+						"condition"  => "{$this->_table}.{$column} {$repel_operator}",
+					);
+				}else{
+					$this->_where[] = array(
+	                    "condition"  => "{$this->_table}.{$column} {$repel_operator} :{$column}{$count}",
+	                    "parameters" => array(":{$column}{$count}" => $value)
+	                );
+				}
+
             }
 
         }
