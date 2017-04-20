@@ -54,7 +54,7 @@ class RExecutor {
             foreach ($criteria->OrdersBy as $key => $value) {
                 if (in_array(strtoupper($value), array("ASC", "DESC"))) {
 					if (strpos($key,'.')>=0){
-						$statement .= " ".$key . " " . strtoupper($value) . ",";
+						$statement .= " "."\"".$key."\"" . " " . strtoupper($value) . ",";
 					}else{
 						$statement .= " {$table_name}." . $key . " " . strtoupper($value) . ",";
 					}
