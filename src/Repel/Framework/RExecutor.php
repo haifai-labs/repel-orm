@@ -144,18 +144,23 @@ class RExecutor {
         return $this->find($find_criteria, false);
     }
 
-//	public function delete() {
-//		$primary_key = Generator\BaseGenerator::tableToPK( $this->_record->TABLE );
-//
-//		//delete from admins where admin_id=1
-//		$parameters						 = array();
-//		$statement						 = "DELETE FROM {$this->_record->TABLE} ";
-//		$statement .= " WHERE {$this->_record->TABLE}.{$primary_key} = :{$primary_key}";
-//		$parameters[":{$primary_key}"]	 = $this->_record->$primary_key;
-//
-//		$result = $this->execute( $statement, $parameters );
-//		return $result->rowCount();
-//	}
+	public function delete() {
+		$parameters						 = array();
+		$statement						 = "DELETE FROM {$this->_record->TABLE} ";
+		$statement .= " WHERE ";
+		$where_statement = array();
+		foreach ($this->_record->PRIMARY_KEYS as $primary_key) {
+			$where_statement[]= "{$this->_record->TABLE}.{$primary_key} = :{$primary_key}";
+			$parameters[":{$primary_key}"]	 = $this->_record->$primary_key;
+		}
+		if (count($where_statement)===0){
+			return false;
+		}
+		$statement .= implode(' AND ',$where_statement);
+		$result = $this->execute( $statement, $parameters );
+		return $result->rowCount();
+	}
+
 protected function parseSetProperty($type,$value){
     $type = strtolower($type);
     switch ($type) {
