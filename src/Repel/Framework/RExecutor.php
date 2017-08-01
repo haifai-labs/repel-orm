@@ -53,14 +53,14 @@ class RExecutor {
 
             foreach ($criteria->OrdersBy as $key => $value) {
                 if (in_array(strtoupper($value), array("ASC", "DESC"))) {
-					if (strpos($key,'.')>=0){
+					if (strpos($key,'.')!== false){
 						$statement .= " ". $key . " " . strtoupper($value) . ",";
 
 					}else{
-						$statement .= " {$table_name}." . $key . " " . strtoupper($value) . ",";
+						$statement .= " {$table_name}.\"" . $key . "\" " . strtoupper($value) . ",";
 					}
                 } else {
-                    throw new Exception("Wrong statement in ORDER BY clause: " . $value);
+                    throw new \Exception("Wrong statement in ORDER BY clause: " . $value);
                 }
             }
             $statement = substr($statement, 0, strlen($statement) - 1); // remove last ,
