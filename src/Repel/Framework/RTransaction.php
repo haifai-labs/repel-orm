@@ -35,10 +35,12 @@ class RTransaction extends \PDO {
     }
 
     public function beginTransaction() {
-        if (!$this->nestable() && $this->transLevel == 0) {
-            $this->PDO->beginTransaction();
+        if ( $this->transLevel > 0) {
+            if ($this->nestable() ) {
+                $this->PDO->exec("SAVEPOINT LEVEL{$this->transLevel}");
+            }
         } else {
-            $this->PDO->exec("SAVEPOINT LEVEL{$this->transLevel}");
+            $this->PDO->beginTransaction();
         }
 
         $this->transLevel++;
@@ -47,10 +49,12 @@ class RTransaction extends \PDO {
     public function commit() {
         $this->transLevel--;
 
-        if (!$this->nestable() && $this->transLevel == 0) {
-            $this->PDO->commit();
+        if ($this->transLevel > 0) {
+            if ($this->nestable()) {
+                $this->PDO->exec("RELEASE SAVEPOINT LEVEL{$this->transLevel}");
+            }
         } else {
-            $this->PDO->exec("RELEASE SAVEPOINT LEVEL{$this->transLevel}");
+            $this->PDO->commit();
         }
 
     }
@@ -58,10 +62,12 @@ class RTransaction extends \PDO {
     public function rollBack() {
         $this->transLevel--;
 
-        if (!$this->nestable() && $this->transLevel == 0) {
-            $this->PDO->rollBack();
+        if ($this->transLevel > 0) {
+            if ($this->nestable()) {
+                $this->PDO->exec("ROLLBACK TO SAVEPOINT LEVEL{$this->transLevel}");
+            }
         } else {
-            $this->PDO->exec("ROLLBACK TO SAVEPOINT LEVEL{$this->transLevel}");
+            $this->PDO->rollBack();
         }
     }
 
