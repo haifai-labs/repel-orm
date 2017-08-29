@@ -6,7 +6,7 @@ class RTransaction extends \PDO {
 
     protected static $savepointTransactions = array("pgsql", "mysql");
     // The current transaction level.
-    protected $transLevel = 0;
+    protected static $transLevel = 0;
     private static $singleton;
     protected $PDO;
 
@@ -35,23 +35,23 @@ class RTransaction extends \PDO {
     }
 
     public function beginTransaction() {
-        if ( $this->transLevel > 0) {
+        if ( self::$transLevel > 0) {
             if ($this->nestable() ) {
-                $this->PDO->exec("SAVEPOINT LEVEL{$this->transLevel}");
+                $this->PDO->exec("SAVEPOINT LEVEL".self::$transLevel.")";
             }
         } else {
             $this->PDO->beginTransaction();
         }
 
-        $this->transLevel++;
+        self::$transLevel++;
     }
 
     public function commit() {
-        $this->transLevel--;
+        self::$transLevel--;
 
-        if ($this->transLevel > 0) {
+        if (self::$transLevel > 0) {
             if ($this->nestable()) {
-                $this->PDO->exec("RELEASE SAVEPOINT LEVEL{$this->transLevel}");
+				$this->PDO->exec("RELEASE SAVEPOINT LEVEL".self::$transLevel.")";
             }
         } else {
             $this->PDO->commit();
@@ -60,11 +60,11 @@ class RTransaction extends \PDO {
     }
 
     public function rollBack() {
-        $this->transLevel--;
+        self::$transLevel--;
 
-        if ($this->transLevel > 0) {
+        if (self::$transLevel > 0) {
             if ($this->nestable()) {
-                $this->PDO->exec("ROLLBACK TO SAVEPOINT LEVEL{$this->transLevel}");
+                $this->PDO->exec("ROLLBACK TO SAVEPOINT LEVEL".self::$transLevel.")";
             }
         } else {
             $this->PDO->rollBack();
