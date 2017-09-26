@@ -18,8 +18,11 @@ class RDbConnection {
         //$this->PDOInstance->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING );
     }
 
-    public static function instance($driver, $user, $password) {
+    public static function instance($driver = null, $user = null, $password = null) {
         if (!(self::$singleton instanceof self) || self::$singleton->_driver !== $driver) {
+            if ($driver === null || $user === null || $password === null){
+                return null;
+            }
             self::$singleton = new self($driver, $user, $password);
         }
         return self::$singleton;

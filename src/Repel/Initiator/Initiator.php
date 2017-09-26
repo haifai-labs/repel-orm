@@ -12,9 +12,10 @@ class Initiator {
     private $sources;
     private $queries;
 
-    public function __construct($database) {
+    public function __construct($database,$config = null) {
         $this->sources  = array();
         $this->database = $database;
+        $this->config = $config;
         $this->queries  = "";
     }
 
@@ -39,8 +40,7 @@ class Initiator {
     }
 
     public function init() {
-        $manager = new Framework\DatabaseManager($this->database);
-
+        $manager = new Framework\DatabaseManager($this->database,$this->config);
         $result = $manager->db->exec('BEGIN;');
         if ($result === false) {
             $errorInfo = $manager->db->errorInfo();

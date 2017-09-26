@@ -7,9 +7,21 @@ class DatabaseManager {
     public $db;
     public $config;
 
-    public function __construct($config) {
-        $this->config = $config;
-        $this->connect();
+    public function __construct($connectionInfo, $config = null) {
+      if ($connectionInfo instanceof \Repel\Framework\RConnectionManagerSingle) {
+          $connection   = $connectionInfo->getConnection();
+          $this->db     = $connection->get();
+          $this->config = $config;
+          if ($this->db === null){
+              $this->connect();
+          }
+      } else if ($connectionInfo instanceof Repel\Framework\RDbConnection) {
+          $this->db     = $connectionInfo->get();
+          $this->config = $config;
+      } else {
+          $this->config = $connectionInfo;
+          $this->connect();
+      }
     }
 
     public function connect() {
