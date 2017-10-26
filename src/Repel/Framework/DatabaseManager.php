@@ -29,19 +29,30 @@ class DatabaseManager {
     }
 
     public function createSchema() {
-        $sql = "SELECT count(schema_name) as count FROM information_schema.schemata WHERE schema_name = 'public';";
+        // $sql = "SELECT count(schema_name) as count FROM information_schema.schemata WHERE schema_name = 'public';";
+        $sql = "SELECT count(nspname) as count FROM pg_catalog.pg_namespace WHERE nspname = 'public';";
         foreach ($this->db->query($sql) as $row) {
             $count = $row ['count'];
         }
-
+        $not_owner = false;
         $old_name = 'zzz_old_' . time();
 
+        $not_owner = true;
         if ($count) {
             $result = $this->db->exec('ALTER SCHEMA public RENAME TO ' . $old_name);
             if ($result === false) {
                 $errorInfo = $this->db->errorInfo();
-                throw new \Exception('SQL ERROR: ' . "\n" . $errorInfo [2]);
+                if ($errorInfo[1]!== 7){
+                    throw new \Exception('SQL ERROR: ' . "\n" . $errorInfo [2]);
+                } else {
+                    $not_owner = true;
+                }
             }
+        }
+
+        if ($not_owner){
+            $this->clearSchema();
+            return 'file';
         }
         $sql = "CREATE SCHEMA public";
 
@@ -52,6 +63,16 @@ class DatabaseManager {
         } else {
             return $old_name;
         }
+    }
+
+    public function clearSchema(){
+        // $sql = "SELECT tablename FROM pg_tables WHERE schemaname = 'public'";
+        // $errorInfo = $this->db->errorInfo();
+        // // var_dump($errorInfo);
+        // foreach ($this->db->query($sql) as $row) {
+        //     var_dump($row['tablename']);
+        // }
+        //@TODO clear
     }
 
     public function initialize() {
