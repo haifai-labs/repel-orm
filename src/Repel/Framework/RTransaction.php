@@ -13,7 +13,11 @@ class RTransaction extends \PDO {
     public function __construct($record = null) {
         $serviceContainer = \Repel\Repel::getServiceContainer();
         if ($record !== null) {
-            $key = $record->_DATABASE;
+            if (is_string($record)){
+                $key = $record;
+            } else{
+                $key = $record->_DATABASE;
+            }
         } else {
             $key = 'primary';
         }
