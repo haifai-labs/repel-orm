@@ -7,7 +7,7 @@ class RFormatter {
     public $_record;
     public $_formatters       = array();
     private $_base_formatters = array(
-        "date", "bool", "unserialize"
+        "date", "bool"
     );
 
     public function __construct($record = null) {
@@ -60,8 +60,7 @@ class RFormatter {
                     return array($new_attributte, $this->formatDate($this->_record->$attributte, $parameters));
                 case "bool":
                     return array($new_attributte, $this->formatBool($this->_record->$attributte, $parameters));
-                case "unserialize":
-                    return array($new_attributte, $this->formatUnserialize($attributte));
+
                 default:
                     return $this->_record->$attributte;
             }
@@ -92,11 +91,5 @@ class RFormatter {
         }
     }
 
-    protected function formatUnserialize($attribute) {
-        if (empty($this->_record->{$attribute})) {
-            return null;
-        }
-        return unserialize($this->_record->{$attribute});
-    }
 
 }
